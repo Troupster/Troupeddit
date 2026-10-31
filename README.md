@@ -65,7 +65,7 @@ In addition, patches for some apps contain additional features that were not pre
 ## 🚀 Get started
 
 1. Install [Morphe Manager](https://morphe.software/) and switch it to advanced/expert mode.
-2. Click [this link](https://morphe.software/add-source?github=YOUR_GITHUB_USER/YOUR_REPO_NAME) to add this patch source to Morphe Manager.
+2. Click [this link](https://morphe.software/add-source?github=Troupster/Troupeddit) to add this patch source to Morphe Manager.
 3. In Morphe Manager, find the app you want to patch.
    * The supported apps are Boost, RIF, Sync, Relay, BaconReader, Joey, Infinity+, Infinity++, and Infinity (Patreon).
 4. Get the APK for your preferred, supported 3rd party reddit app. If you don't have it, you can download it from in the app. APKM bundles (aka split APKs) will also work.
