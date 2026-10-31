@@ -3,6 +3,9 @@
  * https://github.com/wchill/patcheddit
  *
  * See the included NOTICE file for GPLv3 §7(b) and §7(c) terms that apply to this code.
+ * Modifications Copyright 2026 brealorg.
+ * Adapted from https://github.com/brealorg/breal-morphe-patches (0226c2e).
+ * Modified for Breal undelete audit: fail-open recovery, correct album cache URL (2026-10-12).
  */
 
 package app.morphe.extension.boost.http.imgur;
@@ -13,6 +16,7 @@ import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.NullNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 
 import org.jetbrains.annotations.NotNull;
@@ -21,20 +25,23 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import app.morphe.extension.boost.utils.EditableObjectNode;
 import app.morphe.extension.boost.http.AutoSavingCache;
 import app.morphe.extension.boost.http.HttpUtils;
 import app.morphe.extension.boost.http.wayback.WaybackMachine;
 import app.morphe.extension.boost.http.wayback.WaybackResponse;
 import app.morphe.extension.shared.requests.PatchedditInterceptor;
+import app.morphe.extension.boost.utils.BoostUndeleteSettings;
+import app.morphe.extension.boost.utils.LoggingUtils;
 import okhttp3.Response;
 import okhttp3.Request;
 
 public class ImgurUndeleteInterceptor extends PatchedditInterceptor {
     private static final AutoSavingCache imgurCache = new AutoSavingCache("Imgur", 100);
+    private static final String FAIL_OPEN_MARKER = "morphe_boost_undelete_imgur_fail_open";
 
     @Override
     public boolean isPatchIncluded() {
@@ -46,6 +53,10 @@ public class ImgurUndeleteInterceptor extends PatchedditInterceptor {
     @Override
     public Response doIntercept(Chain chain) throws IOException {
         Request request = chain.request();
+        if (!BoostUndeleteSettings.isImgurUndeleteEnabled()) {
+            return chain.proceed(request);
+        }
+
         String host = request.url().host();
 
         if (!host.contains("imgur.com") && !host.contains("imgur-apiv3.p.rapidapi.com")) {
@@ -64,6 +75,10 @@ public class ImgurUndeleteInterceptor extends PatchedditInterceptor {
         }
     }
 
+    private static void logRecoveryFailure(Throwable failure) {
+        LoggingUtils.logInfo(false, () -> FAIL_OPEN_MARKER + ": " + failure.getClass().getSimpleName());
+    }
+
     private Response handleApiCall(Chain chain) throws IOException {
         Request request = chain.request();
         String url = request.url().toString();
@@ -71,8 +86,13 @@ public class ImgurUndeleteInterceptor extends PatchedditInterceptor {
 
         Optional<String> cachedUrl = imgurCache.get(imgurId);
         if (cachedUrl.isPresent()) {
-            Response cachedResponse = HttpUtils.get(cachedUrl.get());
-            return emulateAlbumApiResponse(cachedResponse, imgurId);
+            try {
+                return emulateAlbumApiResponse(
+                        HttpUtils.get(cachedUrl.get(), WaybackMachine.CONTENT_TIMEOUT_MS), imgurId);
+            } catch (Throwable failure) {
+                // Fall back to the live request rather than failing on a bad cache entry.
+                logRecoveryFailure(failure);
+            }
         }
 
         Response response = chain.proceed(request);
@@ -80,16 +100,22 @@ public class ImgurUndeleteInterceptor extends PatchedditInterceptor {
 
         if (response.code() != HttpURLConnection.HTTP_NOT_FOUND) {
             return response;
-        } else {
-            response.close();
         }
 
-        WaybackResponse waybackResponse = WaybackMachine.getFromWayback(request, getAlbumUrl(imgurId));
-        if (waybackResponse.found()) {
-            imgurCache.put(imgurId, response.request().url().toString());
-            return emulateAlbumApiResponse(waybackResponse.getResponse(), imgurId);
+        try {
+            WaybackResponse waybackResponse = WaybackMachine.getFromWayback(request, getAlbumUrl(imgurId));
+            if (waybackResponse.found()) {
+                // Cache the Wayback page, not the Imgur API URL: the cached path parses a Wayback timestamp.
+                String waybackUrl = waybackResponse.getResponse().request().url().toString();
+                Response restored = emulateAlbumApiResponse(waybackResponse.getResponse(), imgurId);
+                imgurCache.put(imgurId, waybackUrl);
+                response.close();
+                return restored;
+            }
+        } catch (Throwable failure) {
+            logRecoveryFailure(failure);
         }
-        return HttpUtils.create404(response.request());
+        return response;
     }
 
     private Response handleImageCall(Chain chain) throws IOException {
@@ -104,7 +130,15 @@ public class ImgurUndeleteInterceptor extends PatchedditInterceptor {
 
         Optional<String> cachedUrl = imgurCache.get(imgurId + "." + ext);
         if (cachedUrl.isPresent()) {
-            return HttpUtils.get(cachedUrl.get());
+            try {
+                Response cached = HttpUtils.get(cachedUrl.get(), WaybackMachine.CONTENT_TIMEOUT_MS);
+                if (cached.isSuccessful()) {
+                    return cached;
+                }
+                cached.close();
+            } catch (Throwable failure) {
+                logRecoveryFailure(failure);
+            }
         }
 
         Response response = chain.proceed(request);
@@ -113,19 +147,23 @@ public class ImgurUndeleteInterceptor extends PatchedditInterceptor {
                 return response;
             }
         }
-        response.close();
 
-        Optional<WaybackResponse> cachedResponse = WaybackMachine.fetchUrlFromCache(request, url);
-        if (cachedResponse.isPresent()) {
-            return cachedResponse.get().getResponse();
+        try {
+            WaybackResponse waybackResponse = WaybackMachine.getFromWayback(request, url);
+            if (waybackResponse.found()) {
+                Response archived = waybackResponse.getResponse();
+                if (archived.isSuccessful()) {
+                    imgurCache.put(imgurId + "." + ext, archived.request().url().toString());
+                    response.close();
+                    return archived;
+                }
+                archived.close();
+            }
+        } catch (Throwable failure) {
+            logRecoveryFailure(failure);
         }
-
-        WaybackResponse waybackResponse = WaybackMachine.getFromWayback(request, url);
-        if (waybackResponse.found()) {
-            imgurCache.put(imgurId + "." + ext, waybackResponse.getContentUrl().get());
-            return waybackResponse.getResponse();
-        }
-        return HttpUtils.create404(request);
+        // Imgur's own answer (404 or the removed.png redirect) is better than a synthetic error.
+        return response;
     }
 
     private String getImgurId(String url) {
@@ -177,8 +215,8 @@ public class ImgurUndeleteInterceptor extends PatchedditInterceptor {
         dataJson.put("datetime", new IntNode(0));
         dataJson.put("error", NullNode.instance);
 
-        responseJson.put("data", new EditableObjectNode(dataJson));
-        EditableObjectNode output = new EditableObjectNode(responseJson);
+        responseJson.put("data", new ObjectNode(JsonNodeFactory.instance, new LinkedHashMap<>(dataJson)));
+        ObjectNode output = new ObjectNode(JsonNodeFactory.instance, new LinkedHashMap<>(responseJson));
 
         return HttpUtils.makeJsonResponse(waybackResponse.request(), output);
     }
@@ -187,7 +225,8 @@ public class ImgurUndeleteInterceptor extends PatchedditInterceptor {
         ArrayNode newArray = new ArrayNode(JsonNodeFactory.instance);
         for (JsonNode node : array) {
             String ext = node.get("ext").asText();
-            EditableObjectNode newNode = new EditableObjectNode(node);
+            ObjectNode newNode = JsonNodeFactory.instance.objectNode();
+            newNode.setAll((ObjectNode) node);
             String imgurUrl = String.format("https://i.imgur.com/%s%s", node.get("hash").asText(), ext);
             String link = WaybackMachine.getWaybackContentUrl(imgurUrl, timestamp);
             newNode.set("datetime", new IntNode(0));

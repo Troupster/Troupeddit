@@ -1,8 +1,8 @@
 [versions]
 desugar_jdk_libs = "2.1.5"
-morphe-patcher = "1.4.1"
-morphe-patches-library = "1.0.2"
-smali = "d856bad65f"
+morphe-patcher = "2.0.0"
+morphe-patches-library = "2.0.0"
+smali = "4220ae75f7"
 annotation = "1.10.0"
 ksp = "2.3.6"
 room = "2.8.4"
@@ -21,6 +21,7 @@ gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
 desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar_jdk_libs" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+okhttp-transport = { module = "com.squareup.okhttp3:okhttp-jvm", version = "5.0.0-alpha.11" }
 androidx-preference = { module = "androidx.preference:preference", version.ref = "androidx-preference" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }

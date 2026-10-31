@@ -7,18 +7,10 @@
 
 package app.morphe.extension.boost.utils;
 
-import java.lang.reflect.Method;
+import com.rubenmayayo.androidsnudown.Snudown;
 
 public class MarkdownRenderer {
-    private static final Method markdownRenderer;
-    static {
-        markdownRenderer = ReflectionUtils.findMethodWithClasses(
-                "com.rubenmayayo.androidsnudown.Snudown",
-                "markdown",
-                String.class);
-    }
-
     public static String render(String text) {
-        return ReflectionUtils.invokeStatic(markdownRenderer, text.replace("<", "&amp;lt;")) + "&nbsp;";
+        return Snudown.markdown(text.replace("<", "&amp;lt;")) + "&nbsp;";
     }
 }

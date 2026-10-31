@@ -1,6 +1,7 @@
 {
-  "created_at": "2026-10-30T14:29:58",
-  "description": "Unofficial build on top of wchill/patcheddit#100: fixes Sync for Reddit's \"Error connecting to Redgifs\", plus 6 additional bug fixes and a Sync Ultra unlock ported from humzakh/HK-Morphe-Patches -- Fix \"Other Discussions\", Fix imgur links, Fix inline images, Fix Image Post Selftext, Fix Reddit Video Links, Fix r/random, and Unlock Sync Ultra + Fix \"Restore Comment\". Also includes automatic WebView fallback for Redgifs videos that fail to load in the native player (no setting to enable -- native player is always tried first, WebView opens only on a real failure; credit pdscomp), a fix for malformed Redgifs URLs (trailing slash + query) that previously extracted an empty gif ID, and a fix that makes comment/selftext links ineligible for Sync's website preview feature (its backend is permanently offline) instead of reserving blank space for a preview that will never load. Also fixes gallery posts and \"Other Discussions\" after Reddit started rejecting the /api/info endpoint (403), and shows thumbnails for crossposted galleries.",
-  "download_url": "https://github.com/KingOfPoptart/patcheddit/releases/download/redgifs-fix-v1/patches-1.4.1-dev.9.mpp",
-  "version": "1.4.1-dev.9"
+  "created_at": "2026-10-30T22:21:29",
+  "description": "## [2.0.3](https://github.com/wchill/patcheddit/compare/v2.0.2...v2.0.3) (2026-10-30)\n\n\n### Bug Fixes\n\n* Comment loading and gallery loading for all reddit apps ([48cb357](https://github.com/wchill/patcheddit/commit/48cb357ca0bdcaaf7aa9f8a694db479e95a7c0ae))",
+  "download_url": "https://github.com/wchill/patcheddit/releases/download/v2.0.3/patches-2.0.3.mpp",
+  "signature_download_url": "https://github.com/wchill/patcheddit/releases/download/v2.0.3/patches-2.0.3.mpp.asc",
+  "version": "2.0.3"
 }

@@ -15,10 +15,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
-import app.morphe.extension.boost.utils.EditableObjectNode;
 import app.morphe.extension.boost.utils.Emojis;
 
 public class RedditApiUtils {
@@ -27,23 +25,21 @@ public class RedditApiUtils {
         for (JsonNode child : children) {
             childrenNode.add(child);
         }
-        EditableObjectNode root = new EditableObjectNode(Map.of(
-                "kind", new TextNode("Listing"),
-                "data", new EditableObjectNode(Map.of(
-                        "after", NullNode.instance,
-                        "dist", NullNode.instance,
-                        "modhash", new TextNode(""),
-                        "geo_filter", new TextNode(""),
-                        "before", new TextNode(""),
-                        "children", childrenNode
-                ))
-        ));
+        ObjectNode root = JsonNodeFactory.instance.objectNode();
+        root.put("kind", "Listing");
+        ObjectNode data = root.putObject("data");
+        data.putNull("after");
+        data.putNull("dist");
+        data.put("modhash", "");
+        data.put("geo_filter", "");
+        data.put("before", "");
+        data.set("children", childrenNode);
         return root;
     }
 
-    public static EditableObjectNode createListing(JsonNode originalListing, List<? extends JsonNode> children) {
+    public static ObjectNode createListing(JsonNode originalListing, List<? extends JsonNode> children) {
         JsonNode originalData = originalListing.get("data");
-        EditableObjectNode data = new EditableObjectNode();
+        ObjectNode data = JsonNodeFactory.instance.objectNode();
         List.of("after", "dist", "modhash", "geo_filter", "before").forEach(key -> {
             data.set(key, Optional.ofNullable(originalData.get(key)).orElse(NullNode.instance));
         });
@@ -53,10 +49,14 @@ public class RedditApiUtils {
         }
         data.set("children", childrenNode);
 
-        EditableObjectNode root = new EditableObjectNode();
+        ObjectNode root = JsonNodeFactory.instance.objectNode();
         root.set("kind", new TextNode("Listing"));
         root.set("data", data);
         return root;
+    }
+
+    static void setIfUnset(ObjectNode node, String key, JsonNode value) {
+        if (!node.has(key)) node.set(key, value);
     }
 
     public static boolean isContentRemoved(JsonNode content) {

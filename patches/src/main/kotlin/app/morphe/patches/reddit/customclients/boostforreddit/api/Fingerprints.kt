@@ -7,27 +7,8 @@
 
 package app.morphe.patches.reddit.customclients.boostforreddit.api
 
-import app.morphe.patcher.Fingerprint
+import app.morphe.patches.reddit.customclients.boostforreddit.bindings.BoostApi
 
-internal object BuildUserAgentFingerprint : Fingerprint(
-    strings = listOf("%s:%s:%s (by /u/%s)")
-)
+internal val GetApiPreferenceFingerprint = BoostApi.BoostPreferences.getApiPreference.fingerprint()
 
-internal object GetClientIdFingerprint : Fingerprint(
-    definingClass = "Credentials;",
-    name = "getClientId",
-)
-
-internal object RedirectUriFingerprint : Fingerprint(
-    strings = listOf("http://rubenmayayo.com")
-)
-
-internal object ShouldOverrideUrlLoadingFingerprint : Fingerprint(
-    definingClass = "Lcom/rubenmayayo/reddit/ui/activities/LoginActivity\$a;",
-    name = "shouldOverrideUrlLoading"
-)
-
-internal object JrawNewUrlFingerprint : Fingerprint(
-    definingClass = "JrawUtils;",
-    name = "newUrl",
-)
+internal val JrawNewUrlFingerprint = BoostApi.JrawUtils.newUrl.fingerprint()

@@ -21,7 +21,7 @@ object AppCompatibility {
         Compatibility(
             name = "Boost for Reddit",
             packageName = "com.rubenmayayo.reddit",
-            targets = listOf(AppTarget(version = "1.12.12"))
+            targets = listOf(AppTarget(version = "1.14.1"))
         )
     )
 
@@ -29,6 +29,11 @@ object AppCompatibility {
         Compatibility(
             name = "Infinity for Reddit+",
             packageName = "ml.docilealligator.infinityforreddit.plus",
+            targets = listOf(AppTarget(version = null))
+        ),
+        Compatibility(
+            name = "Infinity for Reddit++",
+            packageName = "ml.docilealligator.infinityforreddit.plus2",
             targets = listOf(AppTarget(version = null))
         ),
         Compatibility(

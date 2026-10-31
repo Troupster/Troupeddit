@@ -2,6 +2,11 @@ plugins {
     alias(libs.plugins.android.library)
 }
 
+dependencies {
+    compileOnly(libs.bundles.boost)
+    compileOnly(libs.okhttp)
+}
+
 android {
     namespace = "app.morphe.extension"
     compileSdk = 34

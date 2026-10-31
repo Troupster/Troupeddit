@@ -1,20 +1,17 @@
 name: Release
 
+# Manual release: Actions tab -> Release -> Run workflow.
+# Builds the patch bundle, publishes a GitHub release, and updates patches-bundle.json.
+
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-      - dev
+
+permissions:
+  contents: write
 
 jobs:
   release:
     name: Release
-    permissions:
-      contents: write
-      packages: write
-      id-token: write
-      attestations: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -32,33 +29,27 @@ jobs:
       - name: Build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew :patches:buildAndroid generatePatchesList clean
+        run: ./gradlew :patches:buildAndroid --no-daemon
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 'lts/*'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Import GPG key
-        uses: crazy-max/ghaction-import-gpg@v6
-        with:
-          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-          passphrase: ${{ secrets.GPG_PASSPHRASE }}
-          fingerprint: ${{ vars.GPG_FINGERPRINT }}
-
-      - name: Release
-        uses: cycjimmy/semantic-release-action@v5
-        id: release
+      - name: Publish release and update manifest
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Attest
-        if: steps.release.outputs.new_release_published == 'true'
-        uses: actions/attest-build-provenance@v3
-        with:
-          subject-name: 'Patcheddit ${{ steps.release.outputs.new_release_git_tag }}'
-          subject-path: patches/build/libs/patches-*.mpp
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(grep -E '^version\s*=' gradle.properties | head -1 | sed -E 's/.*=\s*//' | tr -d '[:space:]')
+          FILE=$(ls patches/build/libs/*.mpp | head -1)
+          NAME=$(basename "$FILE")
+          gh release create "v$VERSION" "$FILE" --title "v$VERSION" --notes "Build $VERSION" || gh release upload "v$VERSION" "$FILE" --clobber
+          cat > patches-bundle.json <<JSON
+          {
+            "created_at": "$(date -u +%Y-%m-%dT%H:%M:%S)",
+            "description": "Patcheddit-based Reddit client patches with Redgifs and Sync fixes",
+            "download_url": "https://github.com/${{ github.repository }}/releases/download/v$VERSION/$NAME",
+            "version": "$VERSION"
+          }
+          JSON
+          sed -i 's/^          //' patches-bundle.json
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add patches-bundle.json
+          git commit -m "chore: point manifest at v$VERSION" || true
+          git push

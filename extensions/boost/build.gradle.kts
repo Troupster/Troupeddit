@@ -3,27 +3,28 @@ plugins {
 }
 
 dependencies {
-    compileOnly(libs.morphe.extensions.library)
+    compileOnly("androidx.preference:preference:1.2.0")
+    implementation(libs.morphe.extensions.library)
     compileOnly(libs.bundles.boost)
-    compileOnly(project(":extensions:shared:library"))
     compileOnly(project(":extensions:boost:stub"))
-    implementation(libs.annotation)
-    compileOnly(libs.okhttp)
+    compileOnly(libs.annotation)
+    compileOnly("com.squareup.okhttp3:okhttp:5.0.0-alpha.8")
+    implementation(libs.jackson.databind.boost)
     implementation(libs.room.runtime)
     ksp(libs.room.compiler)
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("com.squareup.okhttp3:okhttp:5.0.0-alpha.8")
 }
 
 android {
+    buildTypes.getByName("release") {
+        proguardFiles("proguard-json.pro")
+    }
+    sourceSets.getByName("main").java.directories.add(
+        project(":extensions:shared:library").file("src/main/java").absolutePath
+    )
     defaultConfig {
         minSdk = 26
     }
 }
-
-kotlin {
-    compilerOptions {
-        // OkHttp/Okio are compiled with a newer Kotlin version than the one used by
-        // the Morphe plugin. This flag allows KSP to process them without errors.
-        freeCompilerArgs.add("-Xskip-metadata-version-check")
-    }
-}
-

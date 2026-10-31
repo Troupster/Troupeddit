@@ -3,6 +3,8 @@
  * https://github.com/wchill/patcheddit
  *
  * See the included NOTICE file for GPLv3 §7(b) and §7(c) terms that apply to this code.
+ * Modifications Copyright 2026 Speedy2662.
+ * Adapted from https://github.com/brealorg/breal-morphe-patches (82d70f7).
  */
 
 package app.morphe.extension.boost.http;
@@ -11,11 +13,13 @@ import java.util.List;
 
 import app.morphe.extension.boost.http.arcticshift.ArcticShiftThrottlingInterceptor;
 import app.morphe.extension.boost.http.imgur.ImgurUndeleteInterceptor;
-import app.morphe.extension.boost.http.reddit.RedditFixAudioInDownloadsInterceptor;
 import app.morphe.extension.boost.http.reddit.RedditMediaUndeleteInterceptor;
 import app.morphe.extension.boost.http.reddit.RedditSubmissionUndeleteInterceptor;
 import app.morphe.extension.boost.http.reddit.RedditSubredditUndeleteInterceptor;
+import app.morphe.extension.boost.http.redgifs.RedgifsUrlSanitizerInterceptor;
 import app.morphe.extension.boost.http.wayback.WaybackThrottlingInterceptor;
+import app.morphe.extension.shared.fixes.api.RedditInfoResponsePatch;
+import app.morphe.extension.shared.fixes.comments.MoreChildrenResponsePatch;
 import app.morphe.extension.shared.fixes.feed.RAllPatch;
 import app.morphe.extension.shared.requests.BaseOkHttpRequestHook;
 import okhttp3.Interceptor;
@@ -37,11 +41,13 @@ public class OkHttpRequestHook extends BaseOkHttpRequestHook {
     @Override
     protected List<Interceptor> getInterceptors() {
         return List.of(
+                new RedgifsUrlSanitizerInterceptor(),
                 new RedditMediaUndeleteInterceptor(),
                 new RedditSubmissionUndeleteInterceptor(),
                 new RedditSubredditUndeleteInterceptor(),
-                new RedditFixAudioInDownloadsInterceptor(),
                 new ImgurUndeleteInterceptor(),
+                new RedditInfoResponsePatch(),
+                new MoreChildrenResponsePatch(),
                 new RAllPatch()
         );
     }

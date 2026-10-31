@@ -7,8 +7,14 @@
 
 package app.morphe.extension.boost.utils;
 
-import java.lang.reflect.Method;
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+
 import java.util.List;
+
+import com.rubenmayayo.reddit.ui.customviews.menu.MenuOption;
 
 import app.morphe.extension.shared.ResourceUtils;
 
@@ -16,37 +22,30 @@ import app.morphe.extension.shared.ResourceUtils;
  * @noinspection unused
  */
 public class SettingsUtils {
-    private static final String MENU_OPTION_CLASS = "com.rubenmayayo.reddit.ui.customviews.menu.MenuOption";
-    private static final Method getSettingsUtilsInstance;
-    private static final Method setMenuOptionDivider;
-    private static final Method setMenuOptionValue;
-    private static final Method setMenuOptionTitle;
-    private static final Method setMenuOptionDrawable;
-
-    static {
-        getSettingsUtilsInstance = ReflectionUtils.findMethodWithClasses("id.b", "v0");
-        setMenuOptionDivider = ReflectionUtils.findMethodWithClasses(MENU_OPTION_CLASS, "X", Boolean.TYPE);
-        setMenuOptionValue = ReflectionUtils.findMethodWithClasses(MENU_OPTION_CLASS, "d0", Integer.TYPE);
-        setMenuOptionTitle = ReflectionUtils.findMethodWithClasses(MENU_OPTION_CLASS, "h0", String.class);
-        setMenuOptionDrawable = ReflectionUtils.findMethodWithClasses(MENU_OPTION_CLASS, "a0", Integer.TYPE);
+    public static void openArchiveLink(Context context, String url, String archivePrefix) {
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(archivePrefix + url));
+        if (!(context instanceof Activity)) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        }
+        context.startActivity(intent);
     }
 
-    public static void addMenuOptions(List options) {
-        Object menuOption = ReflectionUtils.construct(MENU_OPTION_CLASS);
-        ReflectionUtils.invoke(menuOption, setMenuOptionDivider, true);
-        options.add(menuOption);
+    public static void addMenuOptions(List<MenuOption> options) {
+        MenuOption divider = new MenuOption();
+        divider.divider = true;
+        options.add(divider);
 
         int drawableId = ResourceUtils.getDrawableIdentifier("ic_library_24dp");
-        menuOption = ReflectionUtils.construct(MENU_OPTION_CLASS);
-        ReflectionUtils.invoke(menuOption, setMenuOptionValue, 101);
-        ReflectionUtils.invoke(menuOption, setMenuOptionTitle, "Open with Wayback Machine");
-        ReflectionUtils.invoke(menuOption, setMenuOptionDrawable, drawableId);
-        options.add(menuOption);
+        MenuOption wayback = new MenuOption();
+        wayback.id = 101;
+        wayback.title = "Open with Wayback Machine";
+        wayback.iconResource = drawableId;
+        options.add(wayback);
 
-        menuOption = ReflectionUtils.construct(MENU_OPTION_CLASS);
-        ReflectionUtils.invoke(menuOption, setMenuOptionValue, 102);
-        ReflectionUtils.invoke(menuOption, setMenuOptionTitle, "Open with Archive.is");
-        ReflectionUtils.invoke(menuOption, setMenuOptionDrawable, drawableId);
-        options.add(menuOption);
+        MenuOption archive = new MenuOption();
+        archive.id = 102;
+        archive.title = "Open with Archive.is";
+        archive.iconResource = drawableId;
+        options.add(archive);
     }
 }
