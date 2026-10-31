@@ -1,15 +1,25 @@
-# 👋🧩 Patcheddit
+# 🧩 Troupeddit
 
-Morphe compatible patches for third party Reddit apps.
+Morphe compatible patches for third party Reddit apps. An unofficial build of [wchill/patcheddit](https://github.com/wchill/patcheddit) v2.0.3 with the Sync for Reddit and Redgifs fixes from [KingOfPoptart/patcheddit](https://github.com/KingOfPoptart/patcheddit) merged in.
 
 > This app uses code from Patcheddit. To learn more, visit <https://reddit.com/r/patcheddit>
 
-Unofficial build of [wchill/patcheddit](https://github.com/wchill/patcheddit) v2.0.3 plus the Sync for Reddit / Redgifs fixes from [KingOfPoptart/patcheddit](https://github.com/KingOfPoptart/patcheddit).
+## ✨ What's different in this build
 
+On top of wchill's v2.0.3 (everything listed below under "Differences from official patch set"), this build adds these Sync for Reddit patches:
+
+* **Redgifs fixes:** emulates the removed Redgifs `/info` endpoint, refreshes the API token when it expires or the user agent changes, repairs malformed Redgifs URLs, and falls back to a WebView when the native player fails.
+* **Other Discussions** loads again after Reddit started rejecting the old endpoint.
+* **Imgur** link and album fixes.
+* **Inline images**, **image post selftext**, **Reddit video links** and **r/random** fixes.
+* **Sync Ultra** unlock and **Restore Comment**.
+* Broken link-preview placeholders are hidden.
+
+Gallery loading uses wchill's fix, which covers all supported apps.
 
 ## ❓ About
 
-Patcheddit is a Morphe compatible patch bundle that supports patching the OAuth login information for 3rd party reddit apps.
+This is a Morphe compatible patch bundle that supports patching the OAuth login information for 3rd party reddit apps.
 
 In addition, patches for some apps contain additional features that were not present in ReVanced.
 
@@ -65,7 +75,7 @@ In addition, patches for some apps contain additional features that were not pre
 ## 🚀 Get started
 
 1. Install [Morphe Manager](https://morphe.software/) and switch it to advanced/expert mode.
-2. Click [this link](https://morphe.software/add-source?github=Troupster/Troupeddit) to add this patch source to Morphe Manager.
+2. In Morphe Manager, tap **+** on the Sources screen and add this source URL: `https://github.com/Troupster/Troupeddit`. Pick the patches from this source (not the original Patcheddit one) when patching, or the extra fixes will not be included.
 3. In Morphe Manager, find the app you want to patch.
    * The supported apps are Boost, RIF, Sync, Relay, BaconReader, Joey, Infinity+, Infinity++, and Infinity (Patreon).
 4. Get the APK for your preferred, supported 3rd party reddit app. If you don't have it, you can download it from in the app. APKM bundles (aka split APKs) will also work.
